@@ -1,6 +1,8 @@
 package gid.com.cardreaderapp;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -10,7 +12,11 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.File;
+
 import gid.com.cardreaderapp.Common.Activity.BaseActivity;
+import gid.com.gidvisionlib.Common.Application.Application;
 import gid.com.gidvisionlib.ViewActivity.GIDLibVisionMainActivity;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
@@ -25,6 +31,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private Button btnDebitCard;
     private ImageView ivOcrResult;
     private TextView tvOcrResultText;
+    private Intent i;
 
     @Override
     protected void bindView() {
@@ -74,23 +81,21 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @Override
     public void goToNewIntent(int id) {
         if(id == GO_TO_OCR_ACTIVITY_KTP){
-            Intent i = new Intent(this,GIDLibVisionMainActivity.class);
-            i.putExtra("OCR_MODE","KTP");
+            this.i = new Intent(this,GIDLibVisionMainActivity.class);
+            this.i.putExtra("OCR_MODE","KTP");
             this.startActivityForResult(i,GO_TO_OCR_ACTIVITY_KTP);
         }else if(id == GO_TO_OCR_ACTIVITY_DEBITCARD){
-            Intent i = new Intent(this,GIDLibVisionMainActivity.class);
-            i.putExtra("OCR_MODE","DEBIT_CARD");
+            this.i = new Intent(this,GIDLibVisionMainActivity.class);
+            this.i.putExtra("OCR_MODE","DEBIT_CARD");
             this.startActivityForResult(i,GO_TO_OCR_ACTIVITY_DEBITCARD);
         }else if(id == GO_TO_OCR_ACTIVITY_NPWP){
-            Intent i = new Intent(this,GIDLibVisionMainActivity.class);
-            i.putExtra("OCR_MODE","NPWP");
+            this.i = new Intent(this,GIDLibVisionMainActivity.class);
+            this.i.putExtra("OCR_MODE","NPWP");
             this.startActivityForResult(i,GO_TO_OCR_ACTIVITY_NPWP);
         }else{
             Log.d(TAG, "intent not found: ");
         }
     }
-
-
 
     @Override
     public void onClick(View v) {
@@ -111,8 +116,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         super.onActivityResult(requestCode, resultCode, data);
 
         if(requestCode == GO_TO_OCR_ACTIVITY_NPWP || requestCode == GO_TO_OCR_ACTIVITY_KTP || requestCode == GO_TO_OCR_ACTIVITY_DEBITCARD){
-            String textCaptured = data.getStringExtra("OCR_RESULT_TEXT");
-            this.tvOcrResultText.setText(textCaptured);
+            if(data.getStringExtra(GIDLibVisionMainActivity.ACTIVITY_STATUS).equals(Application.ACTIVITY_STATUS_OK)){
+                String textResult = data.getStringExtra(GIDLibVisionMainActivity.OCR_CAPTURED_TEXT);
+                String imagePath = data.getStringExtra(GIDLibVisionMainActivity.OCR_CAPTURED_IMG);
+                Bitmap bitmapImage = BitmapFactory.decodeFile(imagePath);
+                this.ivOcrResult.setImageBitmap(bitmapImage);
+                this.tvOcrResultText.setText(textResult);
+            }else if(data.getStringExtra(GIDLibVisionMainActivity.ACTIVITY_STATUS).equals(Application.ACTIVITY_STATUS_CANCELED)){
+                Log.d(TAG, "onActivityResult: Canceled");
+            }else if(data.getStringExtra(GIDLibVisionMainActivity.ACTIVITY_STATUS).equals(Application.ACTIVITY_STATUS_FAILED)){
+                Log.d(TAG, "onActivityResult: Failed");
+            }
         }
     }
 }
