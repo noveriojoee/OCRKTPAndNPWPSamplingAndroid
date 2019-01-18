@@ -1,1 +1,1 @@
-include ':app', ':gidvisionlib'
+include ':app', ':GIDVisionLibAndroid'
